@@ -5,3 +5,8 @@ dj-database-url
 psycopg2-binary
 whitenoise
 gunicorn 
+asgiref
+aiohttp
+uvicorn
+channels
+git+https://github.com/openai/swarm.git

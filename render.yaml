@@ -6,8 +6,12 @@ services:
     startCommand: >
       python manage.py migrate --noinput &&
       python manage.py collectstatic --noinput &&
-      gunicorn config.wsgi:application
+      uvicorn config.asgi:application --host 0.0.0.0 --port $PORT
     envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: COINGECKO_API_KEY
+        sync: false
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DJANGO_DEBUG
