@@ -29,6 +29,9 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # SECRET_KEY = 'django-insecure-5iqa%ww50qm&b*%n6b_!eks^8v7rzffrhf)qv0iv$1k^+=v+_d'
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'your-default-secret-key-for-dev')
 
+# API Keys
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+COINGECKO_API_KEY = os.getenv('COINGECKO_API_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 LOGGING = {
@@ -70,8 +73,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',  # add this
     'api',  # add this
+    'channels',
 ]
 
+ASGI_APPLICATION = 'config.asgi.application'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
 ]

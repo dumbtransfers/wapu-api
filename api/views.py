@@ -6,6 +6,13 @@ from .models import User
 import uuid
 from .authentication import APIKeyAuthentication
 import logging
+from .agents.base_agent.base_agent import AIAgent
+from django.conf import settings
+import os
+from asgiref.sync import async_to_sync
+from functools import wraps
+import asyncio
+
 logger = logging.getLogger(__name__)
 
 @api_view(['POST'])
@@ -59,10 +66,40 @@ def generate_api_key(request):
             'error': 'User not found'
         }, status=status.HTTP_404_NOT_FOUND)
 
-@api_view(['POST'])
-@authentication_classes([APIKeyAuthentication])
-def agent(request):
-    return Response({
-        'message': 'Agent endpoint reached successfully',
-        'username': request.user.username
-    })
+ai_agent = AIAgent()
+
+def async_api_view(view):
+    """
+    Decorator for async API views
+    """
+    @api_view(['POST'])
+    @authentication_classes([APIKeyAuthentication])
+    @wraps(view)
+    def wrapped_view(request, *args, **kwargs):
+        # Run the async view in the current event loop
+        async def run():
+            return await view(request, *args, **kwargs)
+        
+        return async_to_sync(run)()
+    
+    return wrapped_view
+
+@async_api_view
+async def agent(request):
+    try:
+        message = request.data.get('message')
+        if not message:
+            return Response({'error': 'Message is required'}, status=400)
+
+        # Process the message
+        response = await ai_agent.process_message(message)
+        
+        # Return a proper Response object
+        return Response({
+            'response': response
+        })
+    except Exception as e:
+        logger.exception("Error in agent view:")
+        return Response({
+            'error': str(e)
+        }, status=500)
