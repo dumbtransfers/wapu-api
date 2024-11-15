@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: your-api-name
+    name: wapu-api
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: >
@@ -14,13 +14,13 @@ services:
         value: false
       - key: DATABASE_URL
         fromDatabase:
-          name: your-db-name
+          name: wapu_db_api
           property: connectionString
       - key: DJANGO_ALLOWED_HOSTS
         value: .onrender.com
     autoDeploy: true
 
 databases:
-  - name: your-db-name
+  - name: wapu_db_api
     plan: free
     ipAllowList: []
