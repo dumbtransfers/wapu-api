@@ -17,7 +17,7 @@ services:
           name: wapu_db_api
           property: connectionString
       - key: DJANGO_ALLOWED_HOSTS
-        value: .onrender.com
+        value: ".onrender.com,wapu-api.onrender.com"
     autoDeploy: true
 
 databases:
