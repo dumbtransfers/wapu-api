@@ -66,6 +66,43 @@ def generate_api_key(request):
             'error': 'User not found'
         }, status=status.HTTP_404_NOT_FOUND)
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_api_key(request):
+    """Get the existing API key for a user"""
+    try:
+        username = request.data.get('username')
+        if not username:
+            return Response({
+                'error': 'Username is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(username=username)
+            
+            # Check if user has an API key
+            if not user.api_key:
+                # Generate one if they don't have it
+                user.api_key = uuid.uuid4()
+                user.save()
+            
+            return Response({
+                'api_key': user.api_key,
+                'username': user.username
+            }, status=status.HTTP_200_OK)
+            
+        except User.DoesNotExist:
+            return Response({
+                'error': 'User not found. Please register first.'
+            }, status=status.HTTP_404_NOT_FOUND)
+            
+    except Exception as e:
+        logger.exception("Error in get_api_key:")
+        return Response({
+            'error': 'Internal server error',
+            'detail': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 ai_agent = AIAgent()
 
 def async_api_view(view):
@@ -88,16 +125,16 @@ def async_api_view(view):
 async def agent(request):
     try:
         message = request.data.get('message')
+        context = request.data.get('context', {})  # Get context if provided, empty dict if not
+        
         if not message:
             return Response({'error': 'Message is required'}, status=400)
 
-        # Process the message
-        response = await ai_agent.process_message(message)
+        # Process the message with context
+        response = await ai_agent.process_message(message, context)
         
-        # Return a proper Response object
-        return Response({
-            'response': response
-        })
+        return Response(response)  # Now returning the entire response object
+        
     except Exception as e:
         logger.exception("Error in agent view:")
         return Response({
