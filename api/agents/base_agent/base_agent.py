@@ -169,11 +169,24 @@ class AIAgent(Agent):
             
         return result
 
-    async def process_message(self, message: str) -> Dict[str, Any]:
+    async def process_message(self, message: str, context: Dict = None) -> Dict[str, Any]:
+        # Initialize context if None
+        context = context or {}
+        
         client = Swarm()
+        
+        # Add context to the messages if provided
+        messages = [{"role": "user", "content": message}]
+        if context:
+            # Add context as system message
+            context_message = "Context information:\n"
+            for key, value in context.items():
+                context_message += f"- {key}: {value}\n"
+            messages.insert(0, {"role": "system", "content": context_message})
+        
         response = client.run(
             agent=self,
-            messages=[{"role": "user", "content": message}]
+            messages=messages
         )
 
         # Common crypto symbols and their variations
@@ -195,7 +208,8 @@ class AIAgent(Agent):
             "data": {},
             "metadata": {
                 "timestamp": datetime.now().isoformat(),
-                "query": message
+                "query": message,
+                "context": context  # Include the context in metadata
             }
         }
 
