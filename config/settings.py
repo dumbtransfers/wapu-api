@@ -77,6 +77,9 @@ INSTALLED_APPS = [
     'corsheaders'
 ]
 
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False  # Since you're specifying origins
+
 ASGI_APPLICATION = 'config.asgi.application'
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
