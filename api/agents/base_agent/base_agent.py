@@ -17,15 +17,17 @@ class AIAgent(Agent):
             IMPORTANT FUNCTION USAGE RULES:
             1. ALWAYS use get_crypto_price function when ANY question involves a cryptocurrency price, regardless of language
             2. ALWAYS use calculate_crypto_amount function when ANY question involves converting amounts, regardless of language
-            
+            3. ALWAYS use get_dollar_rates function when ANY question involves Argentine dollar rates or exchanges, regardless of language
+
             Examples:
             - "What's the price of BTC?" -> use get_crypto_price
             - "¿Cuál es el precio de Bitcoin?" -> use get_crypto_price
             - "How much is 0.001 BTC?" -> use calculate_crypto_amount
             - "¿Cuánto valen 2 ethereum?" -> use calculate_crypto_amount
-            
+            - "¿A cuánto está el dolar blue?" -> use get_dollar_rates
+        - "Cotización del dolar" -> use get_dollar_rates
             Always maintain these function calls regardless of the query language.""",
-            functions=[self.get_crypto_price, self.calculate_crypto_amount]
+            functions=[self.get_crypto_price, self.calculate_crypto_amount, self.get_dollar_rates]
         )
 
     def calculate_crypto_amount(self, amount: float, symbol: str, conversion_type: str = "to_usd") -> Dict[str, Any]:
@@ -71,6 +73,20 @@ class AIAgent(Agent):
         except (KeyError, IndexError, ZeroDivisionError) as e:
             return {"error": f"Failed to calculate conversion: {str(e)}"}
         
+    def get_dollar_rates(self) -> Dict[str, Any]:
+        """Get current Argentine dollar rates from dolarapi.com"""
+        try:
+            response = requests.get('https://dolarapi.com/v1/dolares')
+            if response.status_code == 200:
+                rates = response.json()
+                return {
+                    "success": True,
+                    "data": rates
+                }
+            return {"success": False, "error": f"API returned status code {response.status_code}"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
     def get_coin_id(self, search_term: str) -> str:
         """Search for a coin's ID using name or symbol, prioritizing popular coins"""
         headers = {
@@ -78,7 +94,7 @@ class AIAgent(Agent):
             'accept': 'application/json'
         }
         
-        # First check top 250 coins by market cap
+        # First check top 250 coinprs by market cap
         markets_url = "https://api.coingecko.com/api/v3/coins/markets"
         markets_params = {
             'vs_currency': 'usd',
@@ -174,6 +190,42 @@ class AIAgent(Agent):
         context = context or {}
         
         client = Swarm()
+        
+        # Check if the message is about Argentine dollars
+        dollar_keywords = [
+            "dolar", "dolares", "dólar", "dólares", "blue", 
+            "oficial", "tarjeta", "cripto", "mayorista",
+            "cuanto esta", "cuánto está", "cotización", "cotizacion",
+            "precio del dolar", "precio dolar"
+        ]
+        
+        is_dollar_query = any(keyword in message.lower() for keyword in dollar_keywords)
+        
+        if is_dollar_query:
+            rates = self.get_dollar_rates()
+            if rates["success"]:
+                result = {
+                    "type": "dollar_rates",
+                    "data": {
+                        "rates": rates["data"],
+                        "timestamp": datetime.now().timestamp()
+                    },
+                    "metadata": {
+                        "timestamp": datetime.now().isoformat(),
+                        "query": message,
+                        "context": context
+                    }
+                }
+                
+                # Add a human-readable response based on the rates
+                response_text = "Cotizaciones del dólar:\n"
+                for rate in rates["data"]:
+                    response_text += f"\n{rate['nombre']}:\n"
+                    response_text += f"Compra: ${rate['compra']}\n"
+                    response_text += f"Venta: ${rate['venta']}\n"
+                
+                result["response"] = response_text
+                return result
         
         # Add context to the messages if provided
         messages = [{"role": "user", "content": message}]
