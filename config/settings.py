@@ -74,11 +74,43 @@ INSTALLED_APPS = [
     'rest_framework',  # add this
     'api',  # add this
     'channels',
+    'corsheaders'
 ]
 
 ASGI_APPLICATION = 'config.asgi.application'
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+]
+
+# For production, specify allowed origins:
+CORS_ALLOWED_ORIGINS = [
+    "https://dashboard.wapu.cash",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+]
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'x-api-key',  # Add your custom headers here
 ]
 
 if not DEBUG:
