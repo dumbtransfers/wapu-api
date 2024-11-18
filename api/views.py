@@ -54,6 +54,15 @@ def generate_api_key(request):
     
     try:
         user = User.objects.get(username=username)
+        
+        # Check if user already has an API key
+        if user.api_key:
+            return Response({
+                'error': 'API key already exists for this user. Use get-api-key endpoint to retrieve it.',
+                'username': user.username
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Generate new API key only if one doesn't exist
         user.api_key = uuid.uuid4()
         user.save()
         
@@ -61,6 +70,7 @@ def generate_api_key(request):
             'api_key': user.api_key,
             'username': user.username
         }, status=status.HTTP_201_CREATED)
+        
     except User.DoesNotExist:
         return Response({
             'error': 'User not found'
