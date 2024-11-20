@@ -205,3 +205,106 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Avalanche RPC
+AVALANCHE_RPC_URL = "https://api.avax.network/ext/bc/C/rpc"
+
+# TraderJoe V2 Contract Addresses on Avalanche
+TRADER_JOE_FACTORY_ADDRESS = "0x8e42f2F4101563bF679975178e880FD87d3eFd4e"  # LBFactory
+TRADER_JOE_ROUTER_ADDRESS = "0xb4315e873dBcf96Ffd0acd8EA43f689D8c20fB30"   # LBRouter
+
+# For testing, some popular pool addresses:
+AVAX_USDC_POOL = "0xd446eb1660f766d533beceef890df7a69d26f7d1"  # AVAX-USDC.e pool
+USDT_USDC_POOL = "0x2823299af89285ff1a1abf58db37ce57006fef5d"  # USDT-USDC pool
+
+TRADER_JOE_FACTORY_ABI = [
+    {
+        "inputs": [
+            {"internalType": "address", "name": "tokenX", "type": "address"},
+            {"internalType": "address", "name": "tokenY", "type": "address"},
+            {"internalType": "uint24", "name": "activeId", "type": "uint24"},
+            {"internalType": "uint16", "name": "binStep", "type": "uint16"}
+        ],
+        "name": "createLBPair",
+        "outputs": [{"internalType": "address", "name": "pair", "type": "address"}],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {"internalType": "address", "name": "tokenX", "type": "address"},
+            {"internalType": "address", "name": "tokenY", "type": "address"},
+            {"internalType": "uint16", "name": "binStep", "type": "uint16"}
+        ],
+        "name": "getLBPairInformation",
+        "outputs": [
+            {
+                "components": [
+                    {"internalType": "address", "name": "LBPair", "type": "address"},
+                    {"internalType": "bool", "name": "createdByOwner", "type": "bool"},
+                    {"internalType": "bool", "name": "ignoredForRouting", "type": "bool"}
+                ],
+                "internalType": "struct ILBFactory.LBPairInformation",
+                "name": "LBPairInformation",
+                "type": "tuple"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]
+
+TRADER_JOE_POOL_ABI = [
+    {
+        "inputs": [],
+        "name": "getActiveId",
+        "outputs": [{"internalType": "uint24", "name": "", "type": "uint24"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getBinStep",
+        "outputs": [{"internalType": "uint16", "name": "", "type": "uint16"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [{"internalType": "uint24", "name": "id", "type": "uint24"}],
+        "name": "getBin",
+        "outputs": [
+            {"internalType": "uint256", "name": "reserveX", "type": "uint256"},
+            {"internalType": "uint256", "name": "reserveY", "type": "uint256"}
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getTokenX",
+        "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getTokenY",
+        "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getFeesX",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getFeesY",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]
