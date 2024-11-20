@@ -6,4 +6,5 @@ urlpatterns = [
     path('v0/generate-api-key/', views.generate_api_key, name='generate-api-key'),
     path('v0/get-api-key/', views.get_api_key, name='get_api_key'),  # New endpoint
     path('v0/agent/', views.agent, name='agent'),
+    path('v0/risk-analysis/', views.risk_analysis, name='risk_analysis'),  # New endpoint
 ]

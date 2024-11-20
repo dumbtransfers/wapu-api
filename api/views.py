@@ -6,7 +6,8 @@ from .models import User
 import uuid
 from .authentication import APIKeyAuthentication
 import logging
-from .agents.base_agent.base_agent import AIAgent
+from core.agents.base_agent import AIAgent
+from core.agents.risk_agent import RiskAgent
 from django.conf import settings
 import os
 from asgiref.sync import async_to_sync
@@ -114,6 +115,7 @@ def get_api_key(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 ai_agent = AIAgent()
+risk_agent = RiskAgent()  # Add risk agent initialization
 
 def async_api_view(view):
     """
@@ -136,17 +138,38 @@ async def agent(request):
     try:
         message = request.data.get('message')
         context = request.data.get('context', {})  # Get context if provided, empty dict if not
-        
+        agent_type = request.data.get('agent_type', 'general')  # Add agent type parameter
+
         if not message:
             return Response({'error': 'Message is required'}, status=400)
 
-        # Process the message with context
-        response = await ai_agent.process_message(message, context)
-        
+        if agent_type == 'risk':
+            response = await risk_agent.process_message(message, context)
+        else:
+            response = await ai_agent.process_message(message, context)
+                
         return Response(response)  # Now returning the entire response object
         
     except Exception as e:
         logger.exception("Error in agent view:")
+        return Response({
+            'error': str(e)
+        }, status=500)
+    
+@async_api_view
+async def risk_analysis(request):
+    try:
+        message = request.data.get('message')
+        context = request.data.get('context', {})
+        
+        if not message:
+            return Response({'error': 'Message is required'}, status=400)
+
+        response = await risk_agent.process_message(message, context)
+        return Response(response)
+        
+    except Exception as e:
+        logger.exception("Error in risk analysis view:")
         return Response({
             'error': str(e)
         }, status=500)
