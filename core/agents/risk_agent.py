@@ -1,3 +1,5 @@
+import logging
+import sys
 from swarm import Agent, Swarm
 from typing import Dict, Any
 from datetime import datetime, timedelta
@@ -6,8 +8,21 @@ from decimal import Decimal
 from data.market_data import MarketDataService
 from data.historical import HistoricalDataService
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
+
 class RiskAgent(Agent):
     def __init__(self):
+        logger.info("="*50)
+        logger.info("INITIALIZING RISK AGENT")
+        logger.info("="*50)
         super().__init__(
             name="Sofia Risk Analyst",
             model="gpt-4",
@@ -46,14 +61,14 @@ class RiskAgent(Agent):
         self.market_data = MarketDataService()
         self.historical_data = HistoricalDataService()
 
-        print(pool_address, "checking if pool address is valid analyze_pool")
+        logger.info(f"Analyzing pool: {pool_address}")
         try:
             # Get current pool data
             pool_data = await self.market_data.get_pool_metrics(pool_address)
-            print(pool_data, "pool data at analyze_pool, get_pool_metrics")
+            logger.info(f"Pool metrics received: {pool_data}")
             # Get historical performance
             historical = await self.historical_data.get_pool_history(pool_address)
-            print(historical, "historical data at analyze_pool, get_pool_history")
+            logger.info(f"Historical data received: {historical}")
             return {
                 "success": True,
                 "data": {
@@ -86,12 +101,12 @@ class RiskAgent(Agent):
         """
         self.market_data = MarketDataService()
 
-        print(pool_address, "checking if pool address is valid at assess_risk")
+        logger.info(f"Assessing risk for pool: {pool_address}")
 
         try:
             # Get risk metrics
             risk_data = await self.market_data.get_risk_metrics(pool_address)
-            print(risk_data, "risk data at assess_risk")
+            logger.info(f"Risk metrics received: {risk_data}")
             return {
                 "success": True,
                 "data": {
@@ -120,7 +135,7 @@ class RiskAgent(Agent):
         Returns:
             Dict with strategy recommendations
         """
-        print(pool_address, risk_tolerance , "checking if pool address is valid at suggest_strategy")
+        logger.info(f"Suggesting strategy for pool: {pool_address} with risk tolerance: {risk_tolerance}")
 
         try:
             # Get pool analysis
@@ -285,6 +300,8 @@ class RiskAgent(Agent):
         Returns:
             bool: True if message is about strategy
         """
-        print(message, "checking if message is about strategy at _is_strategy_query")
+        logger.info(f"Checking if message is strategy query: {message}")
         strategy_keywords = ["strategy", "recommend", "suggestion", "best", "optimal"]
-        return any(keyword in message.lower() for keyword in strategy_keywords)
+        result = any(keyword in message.lower() for keyword in strategy_keywords)
+        logger.info(f"Is strategy query: {result}")
+        return result
