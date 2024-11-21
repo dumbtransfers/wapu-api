@@ -10,6 +10,9 @@ from web3.providers import HTTPProvider
 from web3 import AsyncWeb3
 from web3.providers import AsyncHTTPProvider
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class PoolMetrics:
@@ -40,6 +43,15 @@ class MarketDataService:
 
         # Contract addresses
         self.trader_joe_factory = settings.TRADER_JOE_FACTORY_ADDRESS
+        self.trader_joe_router = settings.TRADER_JOE_ROUTER_ADDRESS
+        
+        # Known pools for testing/validation
+        self.known_pools = {
+            'AVAX-USDC': settings.AVAX_USDC_POOL,
+            'USDT-USDC': settings.USDT_USDC_POOL
+        }
+        
+        logger.info(f"Initialized MarketDataService with known pools: {self.known_pools}")
         
         # Load ABIs
         self.factory_abi = settings.TRADER_JOE_FACTORY_ABI
@@ -57,6 +69,13 @@ class MarketDataService:
         
     async def get_pool_metrics(self, pool_address: str) -> PoolMetrics:
         """Get current pool metrics from DEX"""
+        # Validate pool address
+        if pool_address not in self.known_pools.values():
+            logger.warning(f"Unknown pool address: {pool_address}")
+            # You might want to add additional validation here
+        
+        logger.info(f"Fetching metrics for pool: {pool_address}")
+        
         cache_key = f"pool_metrics_{pool_address}"
         cached_data = self._get_from_cache(cache_key)
         
