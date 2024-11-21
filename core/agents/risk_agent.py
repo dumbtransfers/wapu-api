@@ -46,13 +46,14 @@ class RiskAgent(Agent):
         self.market_data = MarketDataService()
         self.historical_data = HistoricalDataService()
 
+        print(pool_address, "checking if pool address is valid analyze_pool")
         try:
             # Get current pool data
             pool_data = await self.market_data.get_pool_metrics(pool_address)
-            
+            print(pool_data, "pool data at analyze_pool, get_pool_metrics")
             # Get historical performance
             historical = await self.historical_data.get_pool_history(pool_address)
-            
+            print(historical, "historical data at analyze_pool, get_pool_history")
             return {
                 "success": True,
                 "data": {
@@ -84,10 +85,13 @@ class RiskAgent(Agent):
             Dict with risk assessment and metrics
         """
         self.market_data = MarketDataService()
+
+        print(pool_address, "checking if pool address is valid at assess_risk")
+
         try:
             # Get risk metrics
             risk_data = await self.market_data.get_risk_metrics(pool_address)
-            
+            print(risk_data, "risk data at assess_risk")
             return {
                 "success": True,
                 "data": {
@@ -116,6 +120,8 @@ class RiskAgent(Agent):
         Returns:
             Dict with strategy recommendations
         """
+        print(pool_address, risk_tolerance , "checking if pool address is valid at suggest_strategy")
+
         try:
             # Get pool analysis
             pool_analysis = await self.analyze_pool(pool_address)
@@ -217,10 +223,12 @@ class RiskAgent(Agent):
         """
         self.historical_data = HistoricalDataService()
 
+        print(pool_address , "checking if pool address is valid at get_historical_performance")
+
         try:
             # Get historical data
             historical = await self.historical_data.get_pool_history(pool_address)
-            
+            print(historical, "historical data at get_historical_performance")
             return {
                 "success": True,
                 "data": {
@@ -277,5 +285,6 @@ class RiskAgent(Agent):
         Returns:
             bool: True if message is about strategy
         """
+        print(message, "checking if message is about strategy at _is_strategy_query")
         strategy_keywords = ["strategy", "recommend", "suggestion", "best", "optimal"]
         return any(keyword in message.lower() for keyword in strategy_keywords)
