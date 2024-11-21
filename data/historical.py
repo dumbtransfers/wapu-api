@@ -7,6 +7,7 @@ from django.conf import settings
 from web3 import Web3, AsyncWeb3
 from web3.providers import AsyncHTTPProvider
 import logging
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
