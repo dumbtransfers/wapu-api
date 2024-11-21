@@ -176,75 +176,91 @@ class RiskAgent(Agent):
             return {"success": False, "error": str(e)}
 
     async def process_message(self, message: str, context: Dict = None) -> Dict[str, Any]:
-        """Process user messages and return appropriate analysis"""
-        context = context or {}
-        client = Swarm()
-        
-        # Add context to messages
-        messages = [{"role": "user", "content": message}]
-        if context:
-            context_message = "Context information:\n"
-            for key, value in context.items():
-                context_message += f"- {key}: {value}\n"
-            messages.insert(0, {"role": "system", "content": context_message})
-        
-        response = client.run(
-            agent=self,
-            messages=messages
-        )
-        
-        result = {
-            "response": response.messages[-1]["content"],
-            "type": "risk_analysis",
-            "data": {},
-            "metadata": {
-                "timestamp": datetime.now().isoformat(),
-                "query": message,
-                "context": context
+        try:
+            logger.info(f"[START] Processing message: {message}")
+            context = context or {}
+            client = Swarm()
+            
+            # Add context to messages
+            messages = [{"role": "user", "content": message}]
+            if context:
+                context_message = "Context information:\n"
+                for key, value in context.items():
+                    context_message += f"- {key}: {value}\n"
+                messages.insert(0, {"role": "system", "content": context_message})
+            
+            logger.info(f"[CONTEXT] Added context to messages: {context}")
+            
+            response = await client.run(  # Make sure client.run is awaited if it's async
+                agent=self,
+                messages=messages
+            )
+            
+            logger.info(f"[RESPONSE] Got response from client")
+            
+            result = {
+                "response": response.messages[-1]["content"],
+                "type": "risk_analysis",
+                "data": {},
+                "metadata": {
+                    "timestamp": datetime.now().isoformat(),
+                    "query": message,
+                    "context": context
+                }
             }
-        }
-        
-        # Extract pool address and analysis type from message
-        pool_address = self._extract_pool_address(message)
-        if pool_address:
-            if self._is_risk_query(message):
-                risk_data = await self.assess_risk(pool_address)
-                if risk_data["success"]:
-                    result.update({
-                        "type": "risk_assessment",
-                        "data": risk_data["data"]
-                    })
-            elif self._is_strategy_query(message):
-                strategy = await self.suggest_strategy(
-                    pool_address,
-                    context.get('risk_tolerance', 'moderate')
-                )
-                if strategy["success"]:
-                    result.update({
-                        "type": "strategy_recommendation",
-                        "data": strategy["data"]
-                    })
-        
-        return result
+            
+            # Extract pool address and analysis type from message
+            pool_address = self._extract_pool_address(message)
+            if pool_address:
+                logger.info(f"[POOL] Found pool address: {pool_address}")
+                if self._is_risk_query(message):
+                    risk_data = await self.assess_risk(pool_address)
+                    if risk_data["success"]:
+                        result.update({
+                            "type": "risk_assessment",
+                            "data": risk_data["data"]
+                        })
+                elif self._is_strategy_query(message):
+                    strategy = await self.suggest_strategy(
+                        pool_address,
+                        context.get('risk_tolerance', 'moderate')
+                    )
+                    if strategy["success"]:
+                        result.update({
+                            "type": "strategy_recommendation",
+                            "data": strategy["data"]
+                        })
+            
+            logger.info(f"[COMPLETE] Processing complete. Result type: {result['type']}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"[ERROR] Failed to process message: {str(e)}")
+            logger.exception("Full traceback:")
+            return {
+                "success": False,
+                "error": str(e),
+                "type": "error",
+                "metadata": {
+                    "timestamp": datetime.now().isoformat(),
+                    "query": message,
+                    "context": context
+                }
+            }
 
     async def get_historical_performance(self, pool_address: str) -> Dict[str, Any]:
-        """Get detailed historical performance metrics for a pool
-        
-        Args:
-            pool_address (str): The pool contract address
-            
-        Returns:
-            Dict with historical performance metrics
-        """
-        self.historical_data = HistoricalDataService()
-
-        print(pool_address , "checking if pool address is valid at get_historical_performance")
-
+        """Get detailed historical performance metrics for a pool"""
         try:
+            logger.info(f"[START] get_historical_performance for pool: {pool_address}")
+            
+            self.historical_data = HistoricalDataService()
+            logger.info(f"[INIT] HistoricalDataService initialized")
+            
             # Get historical data
             historical = await self.historical_data.get_pool_history(pool_address)
-            print(historical, "historical data at get_historical_performance")
-            return {
+            logger.info(f"[DATA] Historical data received: {historical}")
+            
+            result = {
                 "success": True,
                 "data": {
                     "performance_metrics": {
@@ -258,7 +274,12 @@ class RiskAgent(Agent):
                     "analysis_timestamp": datetime.now().isoformat()
                 }
             }
+            logger.info(f"[SUCCESS] Performance metrics calculated: {result}")
+            return result
+            
         except Exception as e:
+            logger.error(f"[ERROR] Failed to get historical performance: {str(e)}")
+            logger.exception("Full traceback:")
             return {"success": False, "error": str(e)}
 
     def _extract_pool_address(self, message: str) -> str:
