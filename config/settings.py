@@ -14,6 +14,12 @@ import os
 from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
+import json
+
+def load_abi(filename):
+    abi_path = os.path.join(BASE_DIR,'config' ,'contracts', 'abis', filename)
+    with open(abi_path, 'r') as file:
+        return json.load(file)
 
 load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -258,57 +264,4 @@ TRADER_JOE_FACTORY_ABI = [
     }
 ]
 
-TRADER_JOE_POOL_ABI = [
-    {
-        "inputs": [],
-        "name": "getActiveId",
-        "outputs": [{"internalType": "uint24", "name": "", "type": "uint24"}],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getBinStep",
-        "outputs": [{"internalType": "uint16", "name": "", "type": "uint16"}],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [{"internalType": "uint24", "name": "id", "type": "uint24"}],
-        "name": "getBin",
-        "outputs": [
-            {"internalType": "uint256", "name": "reserveX", "type": "uint256"},
-            {"internalType": "uint256", "name": "reserveY", "type": "uint256"}
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getTokenX",
-        "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getTokenY",
-        "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getFeesX",
-        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getFeesY",
-        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-        "stateMutability": "view",
-        "type": "function"
-    }
-]
+TRADER_JOE_POOL_ABI = load_abi('trader_joe_pool.json')
