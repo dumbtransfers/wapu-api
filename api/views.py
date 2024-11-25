@@ -13,8 +13,12 @@ import os
 from asgiref.sync import async_to_sync
 from functools import wraps
 import asyncio
+from core.nli import NLIRouter
 
 logger = logging.getLogger(__name__)
+
+# Initialize the router
+nli_router = NLIRouter()
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -114,7 +118,6 @@ def get_api_key(request):
             'detail': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-ai_agent = AIAgent()
 risk_agent = RiskAgent()  # Add risk agent initialization
 
 def async_api_view(view):
@@ -137,18 +140,14 @@ def async_api_view(view):
 async def agent(request):
     try:
         message = request.data.get('message')
-        context = request.data.get('context', {})  # Get context if provided, empty dict if not
-        agent_type = request.data.get('agent_type', 'general')  # Add agent type parameter
-
+        context = request.data.get('context', {})
+        
         if not message:
             return Response({'error': 'Message is required'}, status=400)
-
-        if agent_type == 'risk':
-            response = await risk_agent.process_message(message, context)
-        else:
-            response = await ai_agent.process_message(message, context)
-                
-        return Response(response)  # Now returning the entire response object
+        
+        # Use the NLI router instead of directly calling agents
+        response = await nli_router.route_message(message, context)
+        return Response(response)
         
     except Exception as e:
         logger.exception("Error in agent view:")
