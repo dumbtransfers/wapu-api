@@ -142,11 +142,26 @@ async def agent(request):
         message = request.data.get('message')
         context = request.data.get('context', {})
         
+        # Validate and process context
+        if isinstance(context, dict) and 'history' in context:
+            conversation_history = context['history']
+            if not isinstance(conversation_history, list):
+                return Response({'error': 'Context history must be a list'}, status=400)
+            
+            # Validate each history item
+            for item in conversation_history:
+                if not isinstance(item, dict) or 'role' not in item or 'content' not in item:
+                    return Response({'error': 'Invalid history item format'}, status=400)
+        else:
+            conversation_history = []
+
+        logger.info(f"Processing message with history length: {len(conversation_history)}")
+        
         if not message:
             return Response({'error': 'Message is required'}, status=400)
         
-        # Use the NLI router instead of directly calling agents
-        response = await nli_router.route_message(message, context)
+        # Pass the processed context to the router
+        response = await nli_router.route_message(message, {'history': conversation_history})
         return Response(response)
         
     except Exception as e:
