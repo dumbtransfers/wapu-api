@@ -3,36 +3,27 @@ import logging
 from core.agents.base_agent import AIAgent
 from core.agents.risk_agent import RiskAgent
 from core.agents.trading_agent import TradingAgent
+from core.agents.image_agent import ImageAgent
+from core.agents.deployment_agent import DeploymentAgent
+from core.agents.router_agent import RouterAgent
+from swarm import Swarm
 
 logger = logging.getLogger(__name__)
 
 class NLIRouter:
     def __init__(self):
+        self._router_agent = None
         self._base_agent = None
         self._risk_agent = None
         self._trading_agent = None
-        
-        # Keywords that indicate risk/LP related queries
-        self.risk_keywords = {
-            "risk", "risky", "safe", "safety", "volatile", "volatility",
-            "impermanent", "il", "loss", "liquidity analysis", "pool analysis", 
-            "apr", "yield", "returns", "strategy", "trader joe analysis", 
-            "position analysis", "range analysis"
-        }
-        
-        # Keywords that indicate price/crypto related queries
-        self.price_keywords = {
-            "price", "worth", "value", "cost", "btc", "eth", "bitcoin",
-            "ethereum", "convert", "exchange", "dollar", "dolar", "usd",
-            "rate", "cotización", "precio", "cuánto", "cuanto"
-        }
+        self._image_agent = None
+        self._deployment_agent = None
 
-        # Keywords that indicate trading/execution related queries
-        self.trading_keywords = {
-            "add liquidity", "remove liquidity", "swap", "trade", "provide liquidity",
-            "withdraw", "deposit", "invest", "exit position", "enter position",
-            "mint", "burn", "execute", "transaction"
-        }
+    @property
+    def router_agent(self):
+        if self._router_agent is None:
+            self._router_agent = RouterAgent()
+        return self._router_agent
 
     @property
     def base_agent(self):
@@ -52,25 +43,50 @@ class NLIRouter:
             self._trading_agent = TradingAgent()
         return self._trading_agent
 
+    @property
+    def image_agent(self):
+        if self._image_agent is None:
+            self._image_agent = ImageAgent()
+        return self._image_agent
+
+    @property
+    def deployment_agent(self):
+        if self._deployment_agent is None:
+            self._deployment_agent = DeploymentAgent()
+        return self._deployment_agent
+
     async def route_message(self, message: str, context: Dict = None) -> Dict[str, Any]:
-        """Route message to appropriate agent based on content analysis"""
+        """Route message to appropriate agent based on AI analysis"""
         try:
-            agent_type, confidence = self._analyze_message(message)
-            logger.info(f"Routing message to {agent_type} agent with confidence {confidence}")
+            routing = await self.router_agent.analyze_intent(message, context)
+                        # Get the routing info from the tool calls
+            print(routing, "check routing")
+
+            agent_type = routing["agent_type"]
+            confidence = routing["confidence"]
             
-            # Only initialize and use the needed agent
-            if agent_type == "risk":
+            logger.info(f"Routing message to {agent_type} agent with confidence {confidence}")
+            logger.info(f"Reasoning: {routing['reasoning']}")
+            
+            print(context, "context check dude context man")
+            # Route to appropriate agent
+            if agent_type == "deployment":
+                response = await self.deployment_agent.process_message(message, context)
+            elif agent_type == "risk":
                 response = await self.risk_agent.process_message(message, context)
             elif agent_type == "trading":
                 response = await self.trading_agent.process_message(message, context)
+            elif agent_type == "image":
+                response = await self.image_agent.process_message(message, context)
             else:
                 response = await self.base_agent.process_message(message, context)
             
-            # Add routing metadata to response
+            # Add routing metadata
             if isinstance(response, dict):
                 response["routing"] = {
                     "agent": agent_type,
-                    "confidence": confidence
+                    "confidence": confidence,
+                    "reasoning": routing["reasoning"]
                 }
             
             return response
@@ -81,31 +97,7 @@ class NLIRouter:
                 "error": str(e),
                 "routing": {
                     "agent": "error",
-                    "confidence": 0
+                    "confidence": 0,
+                    "reasoning": str(e)
                 }
             }
-
-    def _analyze_message(self, message: str) -> Tuple[str, float]:
-        """Analyze message to determine appropriate agent and confidence level"""
-        message = message.lower()
-        
-        # First check for exact trading phrases
-        if any(phrase in message for phrase in self.trading_keywords):
-            return "trading", 1.0
-            
-        words = set(message.split())
-        
-        # Count matches for each category
-        risk_matches = len(words.intersection(self.risk_keywords))
-        price_matches = len(words.intersection(self.price_keywords))
-        
-        # Calculate confidence scores
-        total_words = len(words)
-        risk_confidence = risk_matches / total_words if total_words > 0 else 0
-        price_confidence = price_matches / total_words if total_words > 0 else 0
-        
-        # Determine which agent to use based on highest confidence
-        if risk_confidence > price_confidence:
-            return "risk", risk_confidence
-        else:
-            return "base", price_confidence

@@ -216,6 +216,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+API_AI_KEY = os.getenv('API_AI_KEY')
 # Avalanche RPC
 AVALANCHE_RPC_URL = "https://api.avax.network/ext/bc/C/rpc"
 
