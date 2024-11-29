@@ -125,19 +125,32 @@ Current message:
 
                     # If we have all required parameters, proceed with deployment
                     if all(key in deployment_params for key in ["name", "symbol", "logo_url"]):
-                        return await self.prepare_token_deployment(
+                        deployment_data = await self.prepare_token_deployment(
                             name=deployment_params["name"],
                             symbol=deployment_params["symbol"],
                             total_supply=deployment_params.get("total_supply", 1_000_000),
                             logo_url=deployment_params["logo_url"]
                         )
-
+                        return {
+                            "response": deployment_data,
+                            "routing": {
+                                "agent": "deployment",
+                                "confidence": 1.0
+                            }
+                        }
                 except json.JSONDecodeError as e:
                     logger.error(f"Error parsing AI response: {str(e)}")
                     return {"error": "Invalid response format from AI"}
 
             # If we get here, something is missing
-            return await self.generate_next_prompt(deployment_params)
+            next_prompt = await self.generate_next_prompt(deployment_params)
+            return {
+                "response": next_prompt,
+                "routing": {
+                    "agent": "deployment",
+                    "confidence": 1.0
+                }
+            }
 
         except Exception as e:
             logger.error(f"Error processing deployment message: {str(e)}")
