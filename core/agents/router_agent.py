@@ -18,9 +18,22 @@ class RouterAgent(Agent):
             You must analyze messages and their context to determine if they are about:
             1. Token deployment (creating new tokens, deploying contracts)
             2. Image generation (creating logos, artwork, designs)
-            3. Risk analysis (pool analysis, impermanent loss, strategies)
-            4. Trading (swaps, liquidity, positions)
+            3. Risk analysis (pool analysis, impermanent loss calculations)
+            4. Liquidity Providing (LP) operations:
+               - Questions about available pools
+               - Adding/removing liquidity
+               - Pool information
+               - LP strategies
+               - Must route to "trading" for any LP-related queries
             5. General crypto queries (prices, conversions, rates)
+            
+            IMPORTANT LP ROUTING RULES:
+            - ANY question about pools, liquidity, or LP operations should go to "trading" agent
+            - Examples of LP queries that should go to "trading":
+              * "What pools are available?"
+              * "Show me the pools"
+              * "Where can I provide liquidity?"
+              * "What are the LP options?"
             
             IMPORTANT: 
             - Users may write in any language
