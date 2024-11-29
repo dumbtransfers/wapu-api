@@ -451,3 +451,21 @@ class MarketDataService:
         except Exception as e:
             logger.error(f"Error calculating historical volatility: {str(e)}")
             return 0.0
+
+    async def get_active_bin_id(self, pool_address: str) -> int:
+        """Get active bin ID from pool contract"""
+        try:
+            # Create contract instance with the provided pool address
+            pool_contract = self.async_w3.eth.contract(
+                address=Web3.to_checksum_address(pool_address),
+                abi=self.pool_abi
+            )
+            
+            # Call getActiveId() function
+            active_id = await pool_contract.functions.getActiveId().call()
+            logger.info(f"Active bin ID for pool {pool_address}: {active_id}")
+            return active_id
+            
+        except Exception as e:
+            logger.error(f"Error getting active bin ID: {str(e)}")
+            return 0

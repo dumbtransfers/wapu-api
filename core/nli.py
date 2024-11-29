@@ -2,7 +2,7 @@ from typing import Tuple, Dict, Any
 import logging
 from core.agents.base_agent import AIAgent
 from core.agents.risk_agent import RiskAgent
-from core.agents.trading_agent import TradingAgent
+from core.agents.lp_avax_agent import LiquidityProviderAgent
 from core.agents.image_agent import ImageAgent
 from core.agents.deployment_agent import DeploymentAgent
 from core.agents.router_agent import RouterAgent
@@ -15,7 +15,7 @@ class NLIRouter:
         self._router_agent = None
         self._base_agent = None
         self._risk_agent = None
-        self._trading_agent = None
+        self._lp_avax_agent = None
         self._image_agent = None
         self._deployment_agent = None
 
@@ -38,10 +38,10 @@ class NLIRouter:
         return self._risk_agent
 
     @property
-    def trading_agent(self):
-        if self._trading_agent is None:
-            self._trading_agent = TradingAgent()
-        return self._trading_agent
+    def lp_avax_agent(self):
+        if self._lp_avax_agent is None:
+            self._lp_avax_agent = LiquidityProviderAgent()
+        return self._lp_avax_agent
 
     @property
     def image_agent(self):
@@ -68,6 +68,8 @@ class NLIRouter:
             logger.info(f"Routing message to {agent_type} agent with confidence {confidence}")
             logger.info(f"Reasoning: {routing['reasoning']}")
             
+            message_lower = message.lower()
+
             print(context, "context check dude context man")
             # Route to appropriate agent
             if agent_type == "deployment":
@@ -75,7 +77,26 @@ class NLIRouter:
             elif agent_type == "risk":
                 response = await self.risk_agent.process_message(message, context)
             elif agent_type == "trading":
-                response = await self.trading_agent.process_message(message, context)
+                if "avalanche" in message_lower or "avax" in message_lower:
+                    response = await self.lp_avax_agent.process_message(message, context)
+                elif "unichain" in message_lower:
+                    # TODO: Implement UniChain LP agent
+                    response = {"error": "UniChain LP functionality coming soon!"}
+                else:
+                    # If chain not specified, return available options
+                    response = {
+                        "message": """Please specify which chain you'd like to provide liquidity on:
+
+                    Avalanche (AVAX) - Available now
+                    • Trader Joe V2 pools on Avalanche
+                    • Currently supporting AVAX-USDC and AVAX-USDT pairs
+                    • Concentrated liquidity positions for better capital efficiency
+
+                    UniChain - Coming soon
+                    • UniChain DEX pools
+                    • Multiple pairs with automated market making
+                    • Yield farming opportunities"""
+                    }
             elif agent_type == "image":
                 response = await self.image_agent.process_message(message, context)
             else:
